@@ -1,20 +1,25 @@
-import asyncio
+
 import requests
-from aiogram import Bot, types, Dispatcher
+from aiogram import Bot, types, Dispatcher, executor
 from config import Rapidtoken, tokenTele
 
+bot = Bot(tokenTele)
+dp = Dispatcher(bot)
 
-dp = Dispatcher()
+
+@dp.message_handler(commands=['start'])
+async def welcome(message: types.Message):
+	await message.answer(f'Добро пожаловать в чат семьи Кирдянкиных {message.from_user.first_name}')
 
 
-@dp.message()
+@dp.message_handler()
 async def send(message: types.Message):
 	url = "https://open-ai21.p.rapidapi.com/conversationgpt35"
 	payload = {
 		"messages": [
 			{
 				"role": "user",
-				"content": message
+				"content": message.text
 			}
 		],
 		"web_access": False,
@@ -27,15 +32,9 @@ async def send(message: types.Message):
 	}
 
 	response = requests.post(url, json=payload, headers=headers)
+	res = response.json()['BOT']
+	await message.answer(res)
 
-	await message.answer(response.json()['BOT'])
+executor.start_polling(dp)
 
-
-async def main():
-	bot = Bot(tokenTele)
-	await dp.start_polling(bot)
-
-
-if __name__ == '__main__':
-	asyncio.run(main())
 
